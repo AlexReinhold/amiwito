@@ -19,7 +19,10 @@ public class ExcelReader {
         CodeSource src = ExcelReader.class.getProtectionDomain().getCodeSource();
         URL url = new URL(src.getLocation(), SAMPLE_XLSX_FILE_PATH);
 
-        Workbook workbook = WorkbookFactory.create(new File(url.getPath()));
+//        File currFile = new File(url.getPath());
+        FileInputStream currFile = new FileInputStream(url.getPath());
+
+        Workbook workbook = WorkbookFactory.create(currFile);
 
         // Retrieving the number of sheets in the Workbook
         System.out.println("Workbook has " + workbook.getNumberOfSheets() + " Sheets : ");
@@ -56,7 +59,9 @@ public class ExcelReader {
                 Integer.parseInt(number);
             }catch (Exception e){return;}
 
-            String cellValue = dataFormatter.formatCellValue(row.getCell(1));
+            String cellValue = dataFormatter.formatCellValue(row.getCell(1)).trim();
+            if(cellValue.isEmpty())
+                return;
 
             if(firstColumn.containsKey(cellValue))
                 firstColumn.put(cellValue, firstColumn.get(cellValue)+1);
@@ -72,7 +77,9 @@ public class ExcelReader {
                 Integer.parseInt(number);
             }catch (Exception e){return;}
 
-            String cellValue = dataFormatter.formatCellValue(row.getCell(2));
+            String cellValue = dataFormatter.formatCellValue(row.getCell(2)).trim();
+            if(cellValue.isEmpty())
+                return;
             if(firstColumn.containsKey(cellValue))
                 thirdColumn.put(cellValue, firstColumn.get(cellValue));
 
@@ -110,11 +117,10 @@ public class ExcelReader {
             e.printStackTrace();
         }
         // Closing the workbook
+        currFile.close();
 
-        URL url2 = new URL(src.getLocation(), "output.xls");
-        FileOutputStream fileOut = new FileOutputStream(url2.getPath());
-        workbook.write(fileOut);
-        fileOut.close();
+        workbook.write(new FileOutputStream(url.getPath()));
         workbook.close();
+
     }
 }
