@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
@@ -22,7 +23,7 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 public class Main extends javax.swing.JFrame {
 
     String seletedFile = "";
-    
+    public static boolean busy= false;
     /**
      * Creates new form Main
      */
@@ -47,8 +48,8 @@ public class Main extends javax.swing.JFrame {
         clear = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
         jLabel2 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        output = new javax.swing.JTextArea();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        output = new javax.swing.JTextPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -86,9 +87,8 @@ public class Main extends javax.swing.JFrame {
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setText("Status");
 
-        output.setColumns(20);
-        output.setRows(5);
-        jScrollPane1.setViewportView(output);
+        output.setEditable(false);
+        jScrollPane2.setViewportView(output);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -98,17 +98,18 @@ public class Main extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2)
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(clear, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(generate, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(selectFile, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(fileNameField))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 462, Short.MAX_VALUE))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(0, 188, Short.MAX_VALUE)
+                                .addComponent(clear, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(generate, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(fileNameField))))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -126,8 +127,8 @@ public class Main extends javax.swing.JFrame {
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 204, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -184,15 +185,18 @@ public class Main extends javax.swing.JFrame {
     }//GEN-LAST:event_selectFileActionPerformed
 
     private void generateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateActionPerformed
-        if(seletedFile.isEmpty())
+        if(seletedFile.isEmpty()){
             JOptionPane.showMessageDialog(this, "Please select a xlsx file", "Warning", JOptionPane.WARNING_MESSAGE);
-        
-        try {
-            new ExcelReader().process(seletedFile);
-        } catch (IOException | InvalidFormatException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            
+        }else
+        if(busy){
+            JOptionPane.showMessageDialog(this, "There is already a task running", "Error", JOptionPane.ERROR_MESSAGE);
+        }else{
+            busy = true;
+            ExcelReader task = new ExcelReader(seletedFile);
+            task.start();
+            output.setText("Initializing..");
         }
-        
     }//GEN-LAST:event_generateActionPerformed
 
     private void clearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearActionPerformed
@@ -201,6 +205,19 @@ public class Main extends javax.swing.JFrame {
         seletedFile = "";
     }//GEN-LAST:event_clearActionPerformed
 
+    public static void updateText(final String text)
+    {
+        SwingUtilities.invokeLater(new Runnable()
+        {
+            @Override
+            public void run()
+            {            
+                output.setText(output.getText()+"\n"+text);
+                System.out.println(text);
+            }
+        });
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -243,9 +260,9 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
-    public static javax.swing.JTextArea output;
+    public static javax.swing.JTextPane output;
     private javax.swing.JButton selectFile;
     // End of variables declaration//GEN-END:variables
 }
