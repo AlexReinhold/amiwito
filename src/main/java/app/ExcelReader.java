@@ -49,7 +49,7 @@ public class ExcelReader extends Thread{
             // Create a DataFormatter to format and get each cell's value as String
             DataFormatter dataFormatter = new DataFormatter();
 
-            Map<String, Integer> firstColumn = new HashMap<>();
+            Map<String, Integer> firstColumn = new LinkedHashMap<>();
 
             Main.updateText("Reading first column");
             // Evaluate the first column
@@ -59,12 +59,20 @@ public class ExcelReader extends Thread{
                     Integer.parseInt(number);
                 }catch (Exception e){return;}
 
-                String cellValue = dataFormatter.formatCellValue(row.getCell(1)).trim();
+                Cell currCell = row.getCell(1);
+                if (currCell == null || currCell.getCellType() == Cell.CELL_TYPE_BLANK)
+                    return;
+
+                currCell.setCellType(Cell.CELL_TYPE_STRING);
+
+                String cellValue = dataFormatter.formatCellValue(currCell).trim();
                 if(cellValue.isEmpty())
                     return;
 
+                System.out.println("first column > "+cellValue);
+
                 if(firstColumn.containsKey(cellValue))
-                    firstColumn.put(cellValue, firstColumn.get(cellValue)+1);
+                    firstColumn.replace(cellValue, firstColumn.get(cellValue)+1);
                 else
                     firstColumn.put(cellValue, 1);
             });
@@ -73,7 +81,7 @@ public class ExcelReader extends Thread{
 
             Main.updateText("Reading second column");
 
-            Map<String, Integer> thirdColumn = new HashMap<>();
+            Map<String, Integer> thirdColumn = new LinkedHashMap<>();
             // Evaluate the second column
             sheet.forEach(row -> {
                 String number = dataFormatter.formatCellValue(row.getCell(0));
@@ -81,9 +89,18 @@ public class ExcelReader extends Thread{
                     Integer.parseInt(number);
                 }catch (Exception e){return;}
 
-                String cellValue = dataFormatter.formatCellValue(row.getCell(2)).trim();
+                Cell currCell = row.getCell(2);
+
+                if (currCell == null || currCell.getCellType() == Cell.CELL_TYPE_BLANK)
+                    return;
+
+                currCell.setCellType(Cell.CELL_TYPE_STRING);
+
+                String cellValue = dataFormatter.formatCellValue(currCell).trim();
                 if(cellValue.isEmpty())
                     return;
+                System.out.println("second column > "+cellValue);
+
                 if(firstColumn.containsKey(cellValue))
                     thirdColumn.put(cellValue, firstColumn.get(cellValue));
 
@@ -92,8 +109,9 @@ public class ExcelReader extends Thread{
             Main.updateText("**********************");
 
             Main.updateText("Generating new data");
-            List<String> newList = new ArrayList<>();
+            List<String> newList = new LinkedList<>();
             thirdColumn.forEach((k,v)->{
+                System.out.println("New list > "+k);
                 for (int i = 0; i < v; i++) {
                     newList.add(k);
                 }
@@ -114,9 +132,9 @@ public class ExcelReader extends Thread{
 
                     if (newList.isEmpty())
                         return;
-
+//                    int last = newList.size() - 1;
                     String cellphone = newList.remove(0);
-    //                System.out.println(cellphone);
+                    System.out.println(cellphone);
                     row.createCell(3).setCellValue(cellphone);
 
                 });
@@ -135,6 +153,7 @@ public class ExcelReader extends Thread{
 
             Main.updateText("Finished Process");
         }catch (Exception e){
+            e.printStackTrace();
             Main.updateText(e.getMessage());
         }
 
