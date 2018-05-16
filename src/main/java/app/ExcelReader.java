@@ -4,40 +4,38 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 
 import java.io.*;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.security.CodeSource;
 import java.util.*;
+import javax.swing.JTextArea;
 
+        
 public class ExcelReader {
 
-    public static final String SAMPLE_XLSX_FILE_PATH = "Data.xlsx";
+    //public static final String SAMPLE_XLSX_FILE_PATH = "Data.xlsx";
 
-    public static void main(String[] args) throws IOException, InvalidFormatException {
+    public void process(String file_path) throws IOException, InvalidFormatException {
 
         // Creating a Workbook from an Excel file (.xls or .xlsx)
-        CodeSource src = ExcelReader.class.getProtectionDomain().getCodeSource();
-        URL url = new URL(src.getLocation(), SAMPLE_XLSX_FILE_PATH);
-
+        //CodeSource src = ExcelReader.class.getProtectionDomain().getCodeSource();
+        //URL url = new URL(src.getLocation(), file_path);
+        Main.output.setText("");
 //        File currFile = new File(url.getPath());
-        FileInputStream currFile = new FileInputStream(url.getPath());
-
+        FileInputStream currFile = new FileInputStream(file_path);
+       
         Workbook workbook = WorkbookFactory.create(currFile);
 
         // Retrieving the number of sheets in the Workbook
-        System.out.println("Workbook has " + workbook.getNumberOfSheets() + " Sheets : ");
-
+        Main.output.append("Workbook has " + workbook.getNumberOfSheets() + " Sheets : "+"\n");
         /*
            =============================================================
            Iterating over all the sheets in the workbook (Multiple ways)
            =============================================================
         */
 
-        System.out.println("Retrieving Sheets");
+        Main.output.append("Retrieving Sheets"+"\n");
         workbook.forEach(sheet -> {
-            System.out.println("=> " + sheet.getSheetName());
+            Main.output.append("=> " + sheet.getSheetName()+"\n");
         });
-
+        
         /*
            ==================================================================
            Iterating over all the rows and columns in a Sheet (Multiple ways)
@@ -52,6 +50,7 @@ public class ExcelReader {
 
         Map<String, Integer> firstColumn = new HashMap<>();
 
+        Main.output.append("Reading first column"+"\n");
         // Evaluate the first column
         sheet.forEach(row -> {
             String number = dataFormatter.formatCellValue(row.getCell(0));
@@ -68,7 +67,11 @@ public class ExcelReader {
             else
                 firstColumn.put(cellValue, 1);
         });
-
+        Main.output.append("Done"+"\n");
+        Main.output.append("**********************"+"\n");
+        
+        Main.output.append("Reading second column"+"\n");
+        
         Map<String, Integer> thirdColumn = new HashMap<>();
         // Evaluate the second column
         sheet.forEach(row -> {
@@ -84,17 +87,20 @@ public class ExcelReader {
                 thirdColumn.put(cellValue, firstColumn.get(cellValue));
 
         });
-
+        Main.output.append("Done"+"\n");
+        Main.output.append("**********************"+"\n");
+        
+        Main.output.append("Generating new data"+"\n");
         List<String> newList = new ArrayList<>();
-
         thirdColumn.forEach((k,v)->{
             for (int i = 0; i < v; i++) {
                 newList.add(k);
             }
         });
-
-        System.out.println("new list size: "+newList.size());
-
+        Main.output.append("Done"+"\n");
+        Main.output.append("**********************"+"\n");
+        
+        Main.output.append("Writing third column > "+newList.size()+"\n");
         // Generate the third column
         try {
             sheet.forEach(row -> {
@@ -116,11 +122,17 @@ public class ExcelReader {
         }catch (NullPointerException e){
             e.printStackTrace();
         }
+        
+        Main.output.append("Done"+"\n");
+        Main.output.append("**********************"+"\n");
+        
         // Closing the workbook
         currFile.close();
 
-        workbook.write(new FileOutputStream(url.getPath()));
+        workbook.write(new FileOutputStream(file_path));
         workbook.close();
 
+        Main.output.append("Finished Process"+"\n");
+        
     }
 }

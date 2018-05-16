@@ -9,3 +9,4 @@ out
 gen
 /Data.xlsx
 /dependency-reduced-pom.xml
+/target/
