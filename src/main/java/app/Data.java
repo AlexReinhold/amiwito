@@ -2,8 +2,8 @@ package app;
 
 public class Data {
 
-    public String WHATSAPP = "Whatsapp";
-    public String NO_WHATSAPP = "NO Whatsapp";
+    public static String WHATSAPP = "Whatsapp";
+    public static String NO_WHATSAPP = "NO Whatsapp";
 
     private int id;
     private String number;

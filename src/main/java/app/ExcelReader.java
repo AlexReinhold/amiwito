@@ -2,6 +2,7 @@ package app;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
+import org.omg.CORBA.DATA_CONVERSION;
 
 import java.io.*;
 import java.util.*;
@@ -49,14 +50,15 @@ public class ExcelReader extends Thread{
             // Create a DataFormatter to format and get each cell's value as String
             DataFormatter dataFormatter = new DataFormatter();
 
-            Map<String, Integer> firstColumn = new LinkedHashMap<>();
+            Map<Integer, String> firstColumn = new LinkedHashMap<>();
 
             Main.updateText("Reading first column");
             // Evaluate the first column
             sheet.forEach(row -> {
                 String number = dataFormatter.formatCellValue(row.getCell(0));
+                int index;
                 try {
-                    Integer.parseInt(number);
+                    index = Integer.parseInt(number);
                 }catch (Exception e){return;}
 
                 Cell currCell = row.getCell(1);
@@ -69,24 +71,27 @@ public class ExcelReader extends Thread{
                 if(cellValue.isEmpty())
                     return;
 
-                System.out.println("first column > "+cellValue);
+                firstColumn.put(index, cellValue);
 
-                if(firstColumn.containsKey(cellValue))
-                    firstColumn.replace(cellValue, firstColumn.get(cellValue)+1);
-                else
-                    firstColumn.put(cellValue, 1);
             });
             Main.updateText("Done");
             Main.updateText("**********************");
 
+//            System.out.println("first column > "+ firstColumn.size());
+
             Main.updateText("Reading second column");
 
-            Map<String, Integer> thirdColumn = new LinkedHashMap<>();
+            Map<String,Integer> secondColumn = new LinkedHashMap<>();
+
             // Evaluate the second column
+            List<Data> whatsapp = new LinkedList<>();
+            List<Data> nowhatsapp = new LinkedList<>();
+
             sheet.forEach(row -> {
                 String number = dataFormatter.formatCellValue(row.getCell(0));
+                int index;
                 try {
-                    Integer.parseInt(number);
+                    index = Integer.parseInt(number);
                 }catch (Exception e){return;}
 
                 Cell currCell = row.getCell(2);
@@ -99,48 +104,72 @@ public class ExcelReader extends Thread{
                 String cellValue = dataFormatter.formatCellValue(currCell).trim();
                 if(cellValue.isEmpty())
                     return;
-                System.out.println("second column > "+cellValue);
+//                System.out.println("second column > "+cellValue);
 
-                if(firstColumn.containsKey(cellValue))
-                    thirdColumn.put(cellValue, firstColumn.get(cellValue));
+                secondColumn.put(cellValue,index);
 
             });
             Main.updateText("Done");
             Main.updateText("**********************");
 
-            Main.updateText("Generating new data");
-            List<String> newList = new LinkedList<>();
-            thirdColumn.forEach((k,v)->{
-                System.out.println("New list > "+k);
-                for (int i = 0; i < v; i++) {
-                    newList.add(k);
-                }
+            Main.updateText("Comparing data");
+
+            firstColumn.forEach((k,v)->{
+                if(secondColumn.containsKey(v))
+                    whatsapp.add(new Data(k,v).setType(Data.WHATSAPP));
+                else
+                    nowhatsapp.add(new Data(k,v).setType(Data.NO_WHATSAPP));
             });
             Main.updateText("Done");
             Main.updateText("**********************");
 
-            Main.updateText("Writing third column > "+newList.size()+" rows");
+//            Main.updateText("Writing third column > "+newList.size()+" rows");
             // Generate the third column
-            try {
-                sheet.forEach(row -> {
-                    String number = dataFormatter.formatCellValue(row.getCell(0));
-                    try {
-                        Integer.parseInt(number);
-                    } catch (Exception e) {
-                        return;
-                    }
+//            try {
+//                sheet.forEach(row -> {
+//                    String number = dataFormatter.formatCellValue(row.getCell(0));
+//                    try {
+//                        Integer.parseInt(number);
+//                    } catch (Exception e) {
+//                        return;
+//                    }
+//
+//                    if (newList.isEmpty())
+//                        return;
+////                    int last = newList.size() - 1;
+//                    String cellphone = newList.remove(0);
+//                    System.out.println(cellphone);
+//                    row.createCell(3).setCellValue(cellphone);
+//
+//                });
+//            }catch (NullPointerException e){
+//                e.printStackTrace();
+//            }
 
-                    if (newList.isEmpty())
-                        return;
-//                    int last = newList.size() - 1;
-                    String cellphone = newList.remove(0);
-                    System.out.println(cellphone);
-                    row.createCell(3).setCellValue(cellphone);
+            Main.updateText("Generating New Data");
 
-                });
-            }catch (NullPointerException e){
-                e.printStackTrace();
+            Row firstrow = sheet.getRow(0);
+            firstrow.createCell(4).setCellValue("Index");
+            firstrow.createCell(5).setCellValue("Data C");
+            firstrow.createCell(6).setCellValue("Status");
+
+            int i = 1;
+            for (Data w : whatsapp) {
+                Row currRow = sheet.getRow(i);
+                currRow.createCell(4).setCellValue(w.getId());
+                currRow.createCell(5).setCellValue(w.getNumber());
+                currRow.createCell(6).setCellValue(w.getType());
+                i++;
             }
+
+            for (Data nw : nowhatsapp) {
+                Row currRow = sheet.getRow(i);
+                currRow.createCell(6).setCellValue(nw.getType());
+                currRow.createCell(5).setCellValue(nw.getNumber());
+                currRow.createCell(4).setCellValue(nw.getId());
+                i++;
+            }
+
 
             Main.updateText("Done");
             Main.updateText("**********************");
@@ -152,9 +181,12 @@ public class ExcelReader extends Thread{
             workbook.close();
 
             Main.updateText("Finished Process");
+            Main.updateText("**********************");
         }catch (Exception e){
             e.printStackTrace();
+            Main.updateText("Error");
             Main.updateText(e.getMessage());
+            Main.updateText("**********************");
         }
 
         Main.busy = false;
